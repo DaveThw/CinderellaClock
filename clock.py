@@ -1,4 +1,11 @@
 #! /usr/bin/env python3.8
+#
+# Cinderella Clock
+# by Dave Thwaites
+#
+# initially based on clock.py by dionyziz:
+# https://gist.github.com/dionyziz/7ed2e158ca2556ac78bab722182aa629
+
 
 import os
 import pygame
