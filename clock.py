@@ -10,6 +10,7 @@
 import os
 import pygame
 from datetime import datetime
+from datetime import timedelta
 import math
 
 BLACK = (0, 0, 0)
@@ -94,6 +95,9 @@ done = False
 c_x, c_y = CLOCK_W / 2, CLOCK_H / 2
 center = (c_x, c_y)
 
+then = datetime.now()
+one_second = timedelta(seconds=1)
+
 while not done:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -128,6 +132,28 @@ while not done:
             H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2
         ]
     )
+
+    frame_delay = now - then
+    digital_text = "Frame length: " + str(frame_delay)
+    text = digital_font.render(digital_text, True, BLACK)
+    screen.blit(
+        text,
+        [
+            W / 2 - digital_font.size(digital_text)[0] / 2,
+            H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2 - digital_font.size(digital_text)[1]
+        ]
+    )
+    digital_text = str(round(one_second/frame_delay,2)).ljust(5,"0") + "fps"
+    text = digital_font.render(digital_text, True, BLACK)
+    screen.blit(
+        text,
+        [
+            W / 2 - digital_font.size(digital_text)[0] / 2,
+            H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2 + digital_font.size(digital_text)[1]
+        ]
+    )
+
+    then = now
 
     pygame.display.flip()
     clock.tick(60)
