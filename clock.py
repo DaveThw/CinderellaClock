@@ -21,43 +21,10 @@ W = 600 # screen width
 H = W + DIGITAL_H # screen height
 CLOCK_W = W # analog clock width
 CLOCK_H = W # analog clock height
-MARGIN_H = MARGIN_W = 5 # margin of analog clock from window border
-CLOCK_R = (W - MARGIN_W) / 2 # clock radius
-HOUR_R = CLOCK_R / 2 # hour hand length
-MINUTE_R = CLOCK_R * 7 / 10 # minute hand length
-SECOND_R = CLOCK_R * 8 / 10 # second hand length
-TEXT_R = CLOCK_R * 9 / 10 # distance of hour markings from center
-TICK_R = 2 # stroke width of minute markings
-TICK_LENGTH = 5 # stroke length of minute markings
-HOUR_STROKE = 5 # hour hand stroke width
-MINUTE_STROKE = 2 # minute hand stroke width
-SECOND_STROKE = 2 # second hand stroke width
-CLOCK_STROKE = 2 # clock circle stroke width
-CENTER_W = 10 # clock center mount width
-CENTER_H = 10 # clock center mount height
 HOURS_IN_CLOCK = 12
 MINUTES_IN_HOUR = 60
 SECONDS_IN_MINUTE = 60
 SIZE = (W, H)
-
-def circle_point(center, radius, theta):
-    """Calculates the location of a point of a circle given the circle's
-       center and radius as well as the point's angle from the xx' axis"""
-
-    return (center[0] + radius * math.cos(theta),
-            center[1] + radius * math.sin(theta))
-
-def line_at_angle(screen, center, radius, theta, color, width):
-    """Draws a line from a center towards an angle. The angle is given in
-       radians."""
-    point = circle_point(center, radius, theta)
-    pygame.draw.line(screen, color, center, point, width)
-
-def get_angle(unit, total):
-    """Calculates the angle, in radians, corresponding to a portion of the clock
-       counting using the given units up to a given total and starting from 12
-       o'clock and moving clock-wise."""
-    return 2 * math.pi * unit / total - math.pi / 2
 
 def get_angle_deg(unit, total):
     """Calculates the angle, in degrees, corresponding to a portion of the clock
@@ -65,6 +32,8 @@ def get_angle_deg(unit, total):
        o'clock and moving clock-wise."""
     return 90 - (360 * unit / total)
 
+# this function taken from this stackoverflow answer by Rabbid76:
+# https://stackoverflow.com/a/54714144
 def blitRotate(surf, image, pos, originPos, angle):
 
     # offset from pivot to center
@@ -83,20 +52,15 @@ def blitRotate(surf, image, pos, originPos, angle):
 
     # rotate and blit the image
     surf.blit(rotated_image, rotated_image_rect)
-  
-    # draw rectangle around the image
-    #pygame.draw.rect(surf, (255, 0, 0), (*rotated_image_rect.topleft, *rotated_image.get_size()),2)
 
 
 pygame.init()
-#screen = pygame.display.set_mode(SIZE, pygame.FULLSCREEN)
-#screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN, pygame.RESIZABLE)
-#screen = pygame.display.set_mode(SIZE)
 screen = pygame.display.set_mode(SIZE, pygame.RESIZABLE)
 pygame.display.set_caption('Clock')
 hour_font = pygame.font.SysFont('Calibri', 25, True, False)
 digital_font = pygame.font.SysFont('Calibri', 32, False, False)
 
+# load images
 current_path = os.path.dirname(__file__)
 
 clock_face = pygame.image.load(os.path.join(current_path, 'Clock Face.jpg')).convert_alpha()
@@ -104,10 +68,7 @@ hour_hand = pygame.image.load(os.path.join(current_path, 'Hour Hand.png')).conve
 minute_hand = pygame.image.load(os.path.join(current_path, 'Minute Hand.png')).convert_alpha()
 second_hand = pygame.image.load(os.path.join(current_path, 'Second Hand.png')).convert_alpha()
 
-#hour_hand = pygame.transform.scale(hour_hand, (550, 100))
-#minute_hand = pygame.transform.scale(minute_hand, (550, 100))
-#second_hand = pygame.transform.scale(second_hand, (550, 100))
-
+# scale images to fit our clock size
 face_scale = CLOCK_W / 1284
 face_centre = (1284 * 0.5 * face_scale, 1292 * 0.5 * face_scale)
 face_width = 1284 * face_scale
@@ -120,11 +81,12 @@ hand_width = 200 * hand_scale
 
 clock_face = pygame.transform.scale(clock_face, (face_width, face_height))
 
-clock_theta = 0
-
 hour_hand = pygame.transform.scale(hour_hand, (hand_length, hand_width))
 minute_hand = pygame.transform.scale(minute_hand, (hand_length, hand_width))
 second_hand = pygame.transform.scale(second_hand, (hand_length, hand_width))
+
+# rotate the whole clock..?
+clock_theta = 0
 
 clock = pygame.time.Clock()
 done = False
@@ -141,14 +103,6 @@ while not done:
 
     now = datetime.now()
 
-
-    #pygame.draw.ellipse(
-    #    screen,
-    #    BLACK,
-    #    (50,50,300,500),
-    #    CLOCK_STROKE
-    #)
-
     # draw clock
     blitRotate(screen, clock_face, center, face_centre, - clock_theta)
 
@@ -157,46 +111,12 @@ while not done:
     minute_theta = get_angle_deg(now.minute, MINUTES_IN_HOUR)
     second_theta = get_angle_deg(now.second, SECONDS_IN_MINUTE)
 
-    #for (radius, theta, color, stroke) in (
-    #    (HOUR_R, hour_theta, BLACK, HOUR_STROKE),
-    #    (MINUTE_R, minute_theta, BLACK, MINUTE_STROKE),
-    #    (SECOND_R, second_theta, RED, SECOND_STROKE),
-    #):
-    #    line_at_angle(screen, center, radius, theta, color, stroke)
-
-    blitRotate(screen, hour_hand, center, hand_centre, hour_theta - clock_theta)
-    blitRotate(screen, minute_hand, center, hand_centre, minute_theta - clock_theta)
-    blitRotate(screen, second_hand, center, hand_centre, second_theta - clock_theta)
-
-#    # draw clock
-#    pygame.draw.circle(
-#        screen,
-#        BLACK,
-#        center, CLOCK_W / 2 - MARGIN_W / 2,
-#        CLOCK_STROKE
-#    )
-#    # draw clock mount
-#    pygame.draw.circle(
-#        screen,
-#        BLACK,
-#        center, CLOCK_W / 2 - MARGIN_W / 2,
-#        CLOCK_STROKE
-#    )
-
-#    # draw hour markings (text)
-#    for hour in range(1, HOURS_IN_CLOCK + 1):
-#        theta = get_angle(hour, HOURS_IN_CLOCK)
-#        text = hour_font.render(str(hour), True, BLACK)
-#        (text_width, text_height) = hour_font.size(str(hour))
-#        (point_x, point_y) = circle_point(center, TEXT_R, theta)
-#        screen.blit(text, (point_x-text_width/2, point_y-text_height/2))
-
-#    # draw minute markings (lines)
-#    for minute in range(0, MINUTES_IN_HOUR):
-#        theta = get_angle(minute, MINUTES_IN_HOUR)
-#        p1 = circle_point(center, CLOCK_R - TICK_LENGTH, theta)
-#        p2 = circle_point(center, CLOCK_R, theta)
-#        pygame.draw.line(screen, BLACK, p1, p2, TICK_R)
+    for (hand, theta) in (
+        (hour_hand, hour_theta),
+        (minute_hand, minute_theta),
+        (second_hand, second_theta),
+    ):
+        blitRotate(screen, hand, center, hand_centre, theta - clock_theta)
 
     # draw digital clock
     digital_text = now.strftime('%H:%M:%S')
