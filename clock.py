@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.8
+#! /usr/bin/env python3
 #
 # Cinderella Clock
 # by Dave Thwaites
@@ -64,10 +64,10 @@ digital_font = pygame.font.SysFont('Calibri', 32, False, False)
 # load images
 current_path = os.path.dirname(__file__)
 
-clock_face = pygame.image.load(os.path.join(current_path, 'Clock Face.jpg')).convert_alpha()
-hour_hand = pygame.image.load(os.path.join(current_path, 'Hour Hand.png')).convert_alpha()
-minute_hand = pygame.image.load(os.path.join(current_path, 'Minute Hand.png')).convert_alpha()
-second_hand = pygame.image.load(os.path.join(current_path, 'Second Hand.png')).convert_alpha()
+clock_face = pygame.image.load(os.path.join(current_path, 'Clock Face.bmp')).convert_alpha()
+hour_hand = pygame.image.load(os.path.join(current_path, 'Hour Hand.bmp')).convert_alpha()
+minute_hand = pygame.image.load(os.path.join(current_path, 'Minute Hand.bmp')).convert_alpha()
+second_hand = pygame.image.load(os.path.join(current_path, 'Second Hand.bmp')).convert_alpha()
 
 # scale images to fit our clock size
 face_scale = CLOCK_W / 1284
