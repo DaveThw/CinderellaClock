@@ -71,14 +71,14 @@ second_hand = pygame.image.load(os.path.join(current_path, 'Second Hand.bmp')).c
 
 # scale images to fit our clock size
 face_scale = CLOCK_W / 1284
-face_centre = (1284 * 0.5 * face_scale, 1292 * 0.5 * face_scale)
-face_width = 1284 * face_scale
-face_height = 1292 * face_scale
+face_centre = (int(1284 * 0.5 * face_scale), int(1292 * 0.5 * face_scale))
+face_width = int(1284 * face_scale)
+face_height = int(1292 * face_scale)
 
 hand_scale = CLOCK_W * 0.5 * 0.9 / (1100 - 250)
-hand_centre = (250 * hand_scale, 100 * hand_scale)
-hand_length = 1100 * hand_scale
-hand_width = 200 * hand_scale
+hand_centre = (int(250 * hand_scale), int(100 * hand_scale))
+hand_length = int(1100 * hand_scale)
+hand_width = int(200 * hand_scale)
 
 clock_face = pygame.transform.scale(clock_face, (face_width, face_height))
 
