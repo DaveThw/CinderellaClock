@@ -55,107 +55,112 @@ def blitRotate(surf, image, pos, originPos, angle):
     surf.blit(rotated_image, rotated_image_rect)
 
 
-pygame.init()
-screen = pygame.display.set_mode(SIZE, pygame.RESIZABLE)
-pygame.display.set_caption('Clock')
-hour_font = pygame.font.SysFont('Calibri', 25, True, False)
-digital_font = pygame.font.SysFont('Calibri', 32, False, False)
+def main():
+    pygame.init()
+    screen = pygame.display.set_mode(SIZE, pygame.RESIZABLE)
+    pygame.display.set_caption('Clock')
+    hour_font = pygame.font.SysFont('Calibri', 25, True, False)
+    digital_font = pygame.font.SysFont('Calibri', 32, False, False)
 
-# load images
-current_path = os.path.dirname(__file__)
+    # load images
+    current_path = os.path.dirname(__file__)
 
-clock_face = pygame.image.load(os.path.join(current_path, 'Clock Face.bmp')).convert_alpha()
-hour_hand = pygame.image.load(os.path.join(current_path, 'Hour Hand.bmp')).convert_alpha()
-minute_hand = pygame.image.load(os.path.join(current_path, 'Minute Hand.bmp')).convert_alpha()
-second_hand = pygame.image.load(os.path.join(current_path, 'Second Hand.bmp')).convert_alpha()
+    clock_face = pygame.image.load(os.path.join(current_path, 'Clock Face.bmp')).convert_alpha()
+    hour_hand = pygame.image.load(os.path.join(current_path, 'Hour Hand.bmp')).convert_alpha()
+    minute_hand = pygame.image.load(os.path.join(current_path, 'Minute Hand.bmp')).convert_alpha()
+    second_hand = pygame.image.load(os.path.join(current_path, 'Second Hand.bmp')).convert_alpha()
 
-# scale images to fit our clock size
-face_scale = CLOCK_W / 1284
-face_centre = (int(1284 * 0.5 * face_scale), int(1292 * 0.5 * face_scale))
-face_width = int(1284 * face_scale)
-face_height = int(1292 * face_scale)
+    # scale images to fit our clock size
+    face_scale = CLOCK_W / 1284
+    face_centre = (int(1284 * 0.5 * face_scale), int(1292 * 0.5 * face_scale))
+    face_width = int(1284 * face_scale)
+    face_height = int(1292 * face_scale)
 
-hand_scale = CLOCK_W * 0.5 * 0.9 / (1100 - 250)
-hand_centre = (int(250 * hand_scale), int(100 * hand_scale))
-hand_length = int(1100 * hand_scale)
-hand_width = int(200 * hand_scale)
+    hand_scale = CLOCK_W * 0.5 * 0.9 / (1100 - 250)
+    hand_centre = (int(250 * hand_scale), int(100 * hand_scale))
+    hand_length = int(1100 * hand_scale)
+    hand_width = int(200 * hand_scale)
 
-clock_face = pygame.transform.scale(clock_face, (face_width, face_height))
+    clock_face = pygame.transform.scale(clock_face, (face_width, face_height))
 
-hour_hand = pygame.transform.scale(hour_hand, (hand_length, hand_width))
-minute_hand = pygame.transform.scale(minute_hand, (hand_length, hand_width))
-second_hand = pygame.transform.scale(second_hand, (hand_length, hand_width))
+    hour_hand = pygame.transform.scale(hour_hand, (hand_length, hand_width))
+    minute_hand = pygame.transform.scale(minute_hand, (hand_length, hand_width))
+    second_hand = pygame.transform.scale(second_hand, (hand_length, hand_width))
 
-# rotate the whole clock..?
-clock_theta = 0
+    # rotate the whole clock..?
+    clock_theta = 0
 
-clock = pygame.time.Clock()
-done = False
+    clock = pygame.time.Clock()
+    done = False
 
-c_x, c_y = CLOCK_W / 2, CLOCK_H / 2
-center = (c_x, c_y)
+    c_x, c_y = CLOCK_W / 2, CLOCK_H / 2
+    center = (c_x, c_y)
 
-then = datetime.now()
-one_second = timedelta(seconds=1)
+    then = datetime.now()
+    one_second = timedelta(seconds=1)
 
-while not done:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            done = True
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = True
 
-    screen.fill(WHITE)
+        screen.fill(WHITE)
 
-    now = datetime.now()
+        now = datetime.now()
 
-    # draw clock
-    blitRotate(screen, clock_face, center, face_centre, - clock_theta)
+        # draw clock
+        blitRotate(screen, clock_face, center, face_centre, - clock_theta)
 
-    # draw hands
-    hour_theta = get_angle_deg(now.hour + 1.0 * now.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
-    minute_theta = get_angle_deg(now.minute, MINUTES_IN_HOUR)
-    second_theta = get_angle_deg(now.second, SECONDS_IN_MINUTE)
+        # draw hands
+        hour_theta = get_angle_deg(now.hour + 1.0 * now.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
+        minute_theta = get_angle_deg(now.minute, MINUTES_IN_HOUR)
+        second_theta = get_angle_deg(now.second, SECONDS_IN_MINUTE)
 
-    for (hand, theta) in (
-        (hour_hand, hour_theta),
-        (minute_hand, minute_theta),
-        (second_hand, second_theta),
-    ):
-        blitRotate(screen, hand, center, hand_centre, theta - clock_theta)
+        for (hand, theta) in (
+            (hour_hand, hour_theta),
+            (minute_hand, minute_theta),
+            (second_hand, second_theta),
+        ):
+            blitRotate(screen, hand, center, hand_centre, theta - clock_theta)
 
-    # draw digital clock
-    digital_text = now.strftime('%H:%M:%S')
-    text = digital_font.render(digital_text, True, BLACK)
-    screen.blit(
-        text,
-        [
-            W / 2 - digital_font.size(digital_text)[0] / 2,
-            H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2
-        ]
-    )
+        # draw digital clock
+        digital_text = now.strftime('%H:%M:%S')
+        text = digital_font.render(digital_text, True, BLACK)
+        screen.blit(
+            text,
+            [
+                W / 2 - digital_font.size(digital_text)[0] / 2,
+                H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2
+            ]
+        )
 
-    frame_delay = now - then
-    digital_text = "Frame length: " + str(frame_delay)
-    text = digital_font.render(digital_text, True, BLACK)
-    screen.blit(
-        text,
-        [
-            W / 2 - digital_font.size(digital_text)[0] / 2,
-            H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2 - digital_font.size(digital_text)[1]
-        ]
-    )
-    digital_text = str(round(one_second/frame_delay,2)).ljust(5,"0") + "fps"
-    text = digital_font.render(digital_text, True, BLACK)
-    screen.blit(
-        text,
-        [
-            W / 2 - digital_font.size(digital_text)[0] / 2,
-            H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2 + digital_font.size(digital_text)[1]
-        ]
-    )
+        frame_delay = now - then
+        digital_text = "Frame length: " + str(frame_delay)
+        text = digital_font.render(digital_text, True, BLACK)
+        screen.blit(
+            text,
+            [
+                W / 2 - digital_font.size(digital_text)[0] / 2,
+                H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2 - digital_font.size(digital_text)[1]
+            ]
+        )
+        digital_text = str(round(one_second/frame_delay,2)).ljust(5,"0") + "fps"
+        text = digital_font.render(digital_text, True, BLACK)
+        screen.blit(
+            text,
+            [
+                W / 2 - digital_font.size(digital_text)[0] / 2,
+                H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2 + digital_font.size(digital_text)[1]
+            ]
+        )
 
-    then = now
+        then = now
 
-    pygame.display.flip()
-    clock.tick(60)
+        pygame.display.flip()
+        clock.tick(60)
 
-pygame.quit()
+    pygame.quit()
+
+
+if __name__ == "__main__":
+    main()
