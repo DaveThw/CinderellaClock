@@ -17,6 +17,8 @@ import textwrap
 import sys
 from ola.ClientWrapper import ClientWrapper
 
+wrapper = ClientWrapper()
+
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
@@ -59,6 +61,10 @@ def blitRotate(surf, image, pos, originPos, angle):
     surf.blit(rotated_image, rotated_image_rect)
 
 
+def NewData(data):
+  print("DMX Data:", address, ":", data[address-1+0], "->", str(round(data[address-1+0]/255,2)).ljust(5,"0"))
+
+
 def Usage():
     print(textwrap.dedent("""
     Usage: clock.py --universe <universe> --address <address>
@@ -76,6 +82,7 @@ def main():
         Usage()
         sys.exit(2)
 
+    global universe, address
     universe = 3
     address = 400
     for o, a in opts:
@@ -86,6 +93,15 @@ def main():
             universe = int(a)
         elif o in ("-a", "--address"):
             address = int(a)
+
+    client = wrapper.Client()
+    client.RegisterUniverse(universe, client.REGISTER, NewData)
+    print("Starting Cinderella Clock...")
+    try:
+        wrapper.Run()
+    except KeyboardInterrupt:
+        print("Stopping Cinderella Clock...")
+    sys.exit()
 
     pygame.init()
     screen = pygame.display.set_mode(SIZE, pygame.RESIZABLE)
