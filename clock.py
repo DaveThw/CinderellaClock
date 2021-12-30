@@ -12,6 +12,10 @@ import pygame
 from datetime import datetime
 from datetime import timedelta
 import math
+import getopt
+import textwrap
+import sys
+from ola.ClientWrapper import ClientWrapper
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -55,7 +59,34 @@ def blitRotate(surf, image, pos, originPos, angle):
     surf.blit(rotated_image, rotated_image_rect)
 
 
+def Usage():
+    print(textwrap.dedent("""
+    Usage: clock.py --universe <universe> --address <address>
+    Display a 'Cinderella' clock, controllable via DMX, via OLA.
+    -h, --help                Display this help message and exit.
+    -u, --universe <universe> DMX Universe number.
+    -a, --address <address>   DMX Address."""))
+
+
 def main():
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hu:a:", ["help", "universe=", "address="])
+    except getopt.GetoptError as err:
+        print(str(err))
+        Usage()
+        sys.exit(2)
+
+    universe = 3
+    address = 400
+    for o, a in opts:
+        if o in ("-h", "--help"):
+            Usage()
+            sys.exit()
+        elif o in ("-u", "--universe"):
+            universe = int(a)
+        elif o in ("-a", "--address"):
+            address = int(a)
+
     pygame.init()
     screen = pygame.display.set_mode(SIZE, pygame.RESIZABLE)
     pygame.display.set_caption('Clock')
