@@ -33,11 +33,13 @@ MINUTES_IN_HOUR = 60
 SECONDS_IN_MINUTE = 60
 SIZE = (W, H)
 
+
 def get_angle_deg(unit, total):
     """Calculates the angle, in degrees, corresponding to a portion of the clock
        counting using the given units up to a given total and starting from 12
        o'clock and moving clock-wise."""
     return 90 - (360 * unit / total)
+
 
 # this function taken from this stackoverflow answer by Rabbid76:
 # https://stackoverflow.com/a/54714144
@@ -47,10 +49,10 @@ def blitRotate(surf, image, pos, originPos, angle):
     image_rect = image.get_rect(topleft = (pos[0] - originPos[0], pos[1]-originPos[1]))
     offset_center_to_pivot = pygame.math.Vector2(pos) - image_rect.center
     
-    # roatated offset from pivot to center
+    # rotated offset from pivot to center
     rotated_offset = offset_center_to_pivot.rotate(-angle)
 
-    # roatetd image center
+    # rotated image center
     rotated_image_center = (pos[0] - rotated_offset.x, pos[1] - rotated_offset.y)
 
     # get a rotated image
@@ -69,6 +71,16 @@ def NewData(data):
 def TickTock():
     now = datetime.now()
     print(now.strftime('%H:%M:%S.%f'), "Tick Tock!")
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            print("Stopping Cinderella Clock...")
+            wrapper.Stop()
+
+    screen.fill(WHITE)
+
+    pygame.display.flip()
+
     wrapper.AddEvent(1000,TickTock)
 
 
@@ -101,6 +113,13 @@ def main():
         elif o in ("-a", "--address"):
             address = int(a)
 
+    pygame.init()
+    global screen
+    screen = pygame.display.set_mode(SIZE, pygame.RESIZABLE)
+    pygame.display.set_caption('Clock')
+    hour_font = pygame.font.SysFont('Calibri', 25, True, False)
+    digital_font = pygame.font.SysFont('Calibri', 32, False, False)
+
     client = wrapper.Client()
     client.RegisterUniverse(universe, client.REGISTER, NewData)
     print("Starting Cinderella Clock...")
@@ -109,13 +128,9 @@ def main():
         wrapper.Run()
     except KeyboardInterrupt:
         print("Stopping Cinderella Clock...")
-    sys.exit()
 
-    pygame.init()
-    screen = pygame.display.set_mode(SIZE, pygame.RESIZABLE)
-    pygame.display.set_caption('Clock')
-    hour_font = pygame.font.SysFont('Calibri', 25, True, False)
-    digital_font = pygame.font.SysFont('Calibri', 32, False, False)
+    pygame.quit()
+    sys.exit()
 
     # load images
     current_path = os.path.dirname(__file__)
@@ -213,8 +228,6 @@ def main():
 
         pygame.display.flip()
         clock.tick(60)
-
-    pygame.quit()
 
 
 if __name__ == "__main__":
