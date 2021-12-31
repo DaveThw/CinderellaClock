@@ -62,7 +62,14 @@ def blitRotate(surf, image, pos, originPos, angle):
 
 
 def NewData(data):
-  print("DMX Data:", address, ":", data[address-1+0], "->", str(round(data[address-1+0]/255,2)).ljust(5,"0"))
+    now = datetime.now()
+    print(now.strftime('%H:%M:%S.%f'), "DMX Data:", address, ":", data[address-1+0], "->", str(round(data[address-1+0]/255,2)).ljust(5,"0"))
+
+
+def TickTock():
+    now = datetime.now()
+    print(now.strftime('%H:%M:%S.%f'), "Tick Tock!")
+    wrapper.AddEvent(1000,TickTock)
 
 
 def Usage():
@@ -97,6 +104,7 @@ def main():
     client = wrapper.Client()
     client.RegisterUniverse(universe, client.REGISTER, NewData)
     print("Starting Cinderella Clock...")
+    wrapper.AddEvent(1000,TickTock)
     try:
         wrapper.Run()
     except KeyboardInterrupt:
