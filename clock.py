@@ -258,23 +258,5 @@ def main():
 
 
 
-    clock = pygame.time.Clock()
-    done = False
-
-    while not done:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                done = True
-
-        screen.fill(WHITE)
-
-        now = datetime.now()
-
-        then = now
-
-        pygame.display.flip()
-        clock.tick(60)
-
-
 if __name__ == "__main__":
     main()
