@@ -17,7 +17,7 @@ import textwrap
 import sys
 from ola.ClientWrapper import ClientWrapper
 
-wrapper = ClientWrapper()
+olaWrapper = ClientWrapper()
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -80,25 +80,6 @@ def main():
         Usage()
         sys.exit(2)
 
-    def NewData(data):
-        now = datetime.now()
-        print(now.strftime('%H:%M:%S.%f'), "DMX Data:", address, ":", data[address-1+0], "->", str(round(data[address-1+0]/255,2)).ljust(5,"0"))
-
-    def TickTock():
-        now = datetime.now()
-        print(now.strftime('%H:%M:%S.%f'), "Tick Tock!")
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                print("Stopping Cinderella Clock...")
-                wrapper.Stop()
-
-        screen.fill(WHITE)
-
-        pygame.display.flip()
-
-        wrapper.AddEvent(1000,TickTock)
-
     universe = 3
     address = 400
     for o, a in opts:
@@ -110,18 +91,37 @@ def main():
         elif o in ("-a", "--address"):
             address = int(a)
 
+    def NewData(data):
+        now = datetime.now()
+        print(now.strftime('%H:%M:%S.%f'), "DMX Data:", address, ":", data[address-1+0], "->", str(round(data[address-1+0]/255,2)).ljust(5,"0"))
+
+    def TickTock():
+        now = datetime.now()
+        print(now.strftime('%H:%M:%S.%f'), "Tick Tock!")
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                print("Stopping Cinderella Clock...")
+                olaWrapper.Stop()
+
+        screen.fill(WHITE)
+
+        pygame.display.flip()
+
+        olaWrapper.AddEvent(1000,TickTock)
+
     pygame.init()
     screen = pygame.display.set_mode(SIZE, pygame.RESIZABLE)
     pygame.display.set_caption('Clock')
     hour_font = pygame.font.SysFont('Calibri', 25, True, False)
     digital_font = pygame.font.SysFont('Calibri', 32, False, False)
 
-    client = wrapper.Client()
+    client = olaWrapper.Client()
     client.RegisterUniverse(universe, client.REGISTER, NewData)
     print("Starting Cinderella Clock...")
-    wrapper.AddEvent(1000,TickTock)
+    olaWrapper.AddEvent(1000,TickTock)
     try:
-        wrapper.Run()
+        olaWrapper.Run()
     except KeyboardInterrupt:
         print("Stopping Cinderella Clock...")
 
