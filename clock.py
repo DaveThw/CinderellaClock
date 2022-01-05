@@ -63,27 +63,6 @@ def blitRotate(surf, image, pos, originPos, angle):
     surf.blit(rotated_image, rotated_image_rect)
 
 
-def NewData(data):
-    now = datetime.now()
-    print(now.strftime('%H:%M:%S.%f'), "DMX Data:", address, ":", data[address-1+0], "->", str(round(data[address-1+0]/255,2)).ljust(5,"0"))
-
-
-def TickTock():
-    now = datetime.now()
-    print(now.strftime('%H:%M:%S.%f'), "Tick Tock!")
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            print("Stopping Cinderella Clock...")
-            wrapper.Stop()
-
-    screen.fill(WHITE)
-
-    pygame.display.flip()
-
-    wrapper.AddEvent(1000,TickTock)
-
-
 def Usage():
     print(textwrap.dedent("""
     Usage: clock.py --universe <universe> --address <address>
@@ -101,7 +80,25 @@ def main():
         Usage()
         sys.exit(2)
 
-    global universe, address
+    def NewData(data):
+        now = datetime.now()
+        print(now.strftime('%H:%M:%S.%f'), "DMX Data:", address, ":", data[address-1+0], "->", str(round(data[address-1+0]/255,2)).ljust(5,"0"))
+
+    def TickTock():
+        now = datetime.now()
+        print(now.strftime('%H:%M:%S.%f'), "Tick Tock!")
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                print("Stopping Cinderella Clock...")
+                wrapper.Stop()
+
+        screen.fill(WHITE)
+
+        pygame.display.flip()
+
+        wrapper.AddEvent(1000,TickTock)
+
     universe = 3
     address = 400
     for o, a in opts:
@@ -114,7 +111,6 @@ def main():
             address = int(a)
 
     pygame.init()
-    global screen
     screen = pygame.display.set_mode(SIZE, pygame.RESIZABLE)
     pygame.display.set_caption('Clock')
     hour_font = pygame.font.SysFont('Calibri', 25, True, False)
@@ -131,6 +127,8 @@ def main():
 
     pygame.quit()
     sys.exit()
+
+
 
     # load images
     current_path = os.path.dirname(__file__)
