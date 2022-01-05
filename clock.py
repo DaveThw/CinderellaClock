@@ -168,7 +168,7 @@ def main():
 
         if receivingDMX:
             try:
-                digital_text = "DMX: " + str(round(one_second/dmxDelay,2)).ljust(5,"0") + "fps"
+                digital_text = "DMX: " + str(round(one_second/dmxDelay,1)) + "fps"
             except ZeroDivisionError:
                 digital_text = "DMX: ??? fps"
             text = digital_font.render(digital_text, True, BLACK)
@@ -181,9 +181,9 @@ def main():
             )
 
             digital_text = "DMX Data: " + str(address) + ": "
-            digital_text += str(dmxData[0]) + "->" + str(round(dmxData[0]/255,2)).ljust(5,"0") + ", "
-            digital_text += str(dmxData[1]) + "->" + str(round(dmxData[1]/255,2)).ljust(5,"0") + ", "
-            digital_text += str(dmxData[2]) + "->" + str(round(dmxData[2]/255,2)).ljust(5,"0")
+            digital_text += str(dmxData[0]) + "->" + str(round(dmxData[0]/255*100,1)) + "%, "
+            digital_text += str(dmxData[1]) + "->" + str(round(dmxData[1]/255*100,1)) + "%, "
+            digital_text += str(dmxData[2]) + "->" + str(round(dmxData[2]/255*100,1)) + "%"
             text = digital_font.render(digital_text, True, BLACK)
             screen.blit(
                 text,
@@ -196,7 +196,7 @@ def main():
         pygame.display.flip()
 
         redrawThen = now
-        olaWrapper.AddEvent(1000/20,TickTock)
+        olaWrapper.AddEvent(1000/60,TickTock)
 
     pygame.init()
     screen = pygame.display.set_mode(SIZE, pygame.RESIZABLE)
@@ -247,7 +247,7 @@ def main():
     client = olaWrapper.Client()
     client.RegisterUniverse(universe, client.REGISTER, NewData)
     print("Starting Cinderella Clock...")
-    olaWrapper.AddEvent(1000,TickTock)
+    olaWrapper.AddEvent(10,TickTock)
     try:
         olaWrapper.Run()
     except KeyboardInterrupt:
