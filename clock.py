@@ -108,18 +108,33 @@ def main():
         nonlocal receivingDMX, redrawThen
         now = datetime.now()
         # print(now.strftime('%H:%M:%S.%f'), "Tick Tock!")
-        if receivingDMX and (now - dmxThen) > timedelta(seconds=1):
+        if receivingDMX and (now - dmxThen) > dmxTimeout:
             print(now.strftime('%H:%M:%S'), "DMX Stream stopped...")
             receivingDMX = False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                print("Stopping Cinderella Clock...")
+                print("pygame.QUIT: Stopping Cinderella Clock...")
                 olaWrapper.Stop()
 
         redrawDelay = now - redrawThen
 
         screen.fill(WHITE)
+
+        # draw clock
+        blitRotate(screen, clock_face, center, face_centre, - clock_theta)
+
+        # draw hands
+        hour_theta = get_angle_deg(now.hour + 1.0 * now.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
+        minute_theta = get_angle_deg(now.minute, MINUTES_IN_HOUR)
+        second_theta = get_angle_deg(now.second, SECONDS_IN_MINUTE)
+
+        for (hand, theta) in (
+            (hour_hand, hour_theta),
+            (minute_hand, minute_theta),
+            (second_hand, second_theta),
+        ):
+            blitRotate(screen, hand, center, hand_centre, theta - clock_theta)
 
         # draw digital clock
         digital_text = now.strftime('%H:%M:%S')
@@ -195,22 +210,6 @@ def main():
     receivingDMX = False
     dmxData = []
 
-    one_second = timedelta(seconds=1)
-
-    client = olaWrapper.Client()
-    client.RegisterUniverse(universe, client.REGISTER, NewData)
-    print("Starting Cinderella Clock...")
-    olaWrapper.AddEvent(1000,TickTock)
-    try:
-        olaWrapper.Run()
-    except KeyboardInterrupt:
-        print("Stopping Cinderella Clock...")
-
-    pygame.quit()
-    sys.exit()
-
-
-
     # load images
     current_path = os.path.dirname(__file__)
 
@@ -239,14 +238,28 @@ def main():
     # rotate the whole clock..?
     clock_theta = 0
 
-    clock = pygame.time.Clock()
-    done = False
-
     c_x, c_y = CLOCK_W / 2, CLOCK_H / 2
     center = (c_x, c_y)
 
-    then = datetime.now()
     one_second = timedelta(seconds=1)
+    dmxTimeout = timedelta(seconds=1)
+
+    client = olaWrapper.Client()
+    client.RegisterUniverse(universe, client.REGISTER, NewData)
+    print("Starting Cinderella Clock...")
+    olaWrapper.AddEvent(1000,TickTock)
+    try:
+        olaWrapper.Run()
+    except KeyboardInterrupt:
+        print("KeyboardInterrupt: Stopping Cinderella Clock...")
+
+    pygame.quit()
+    sys.exit()
+
+
+
+    clock = pygame.time.Clock()
+    done = False
 
     while not done:
         for event in pygame.event.get():
@@ -256,52 +269,6 @@ def main():
         screen.fill(WHITE)
 
         now = datetime.now()
-
-        # draw clock
-        blitRotate(screen, clock_face, center, face_centre, - clock_theta)
-
-        # draw hands
-        hour_theta = get_angle_deg(now.hour + 1.0 * now.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
-        minute_theta = get_angle_deg(now.minute, MINUTES_IN_HOUR)
-        second_theta = get_angle_deg(now.second, SECONDS_IN_MINUTE)
-
-        for (hand, theta) in (
-            (hour_hand, hour_theta),
-            (minute_hand, minute_theta),
-            (second_hand, second_theta),
-        ):
-            blitRotate(screen, hand, center, hand_centre, theta - clock_theta)
-
-        # draw digital clock
-        digital_text = now.strftime('%H:%M:%S')
-        text = digital_font.render(digital_text, True, BLACK)
-        screen.blit(
-            text,
-            [
-                W / 2 - digital_font.size(digital_text)[0] / 2,
-                H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2
-            ]
-        )
-
-        frame_delay = now - then
-        digital_text = "Frame length: " + str(frame_delay)
-        text = digital_font.render(digital_text, True, BLACK)
-        screen.blit(
-            text,
-            [
-                W / 2 - digital_font.size(digital_text)[0] / 2,
-                H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2 - digital_font.size(digital_text)[1]
-            ]
-        )
-        digital_text = str(round(one_second/frame_delay,2)).ljust(5,"0") + "fps"
-        text = digital_font.render(digital_text, True, BLACK)
-        screen.blit(
-            text,
-            [
-                W / 2 - digital_font.size(digital_text)[0] / 2,
-                H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2 + digital_font.size(digital_text)[1]
-            ]
-        )
 
         then = now
 
