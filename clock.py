@@ -92,22 +92,37 @@ def main():
             address = int(a)
 
     def NewData(data):
+        nonlocal receivingDMX, dmxDelay, dmxThen
         now = datetime.now()
-        print(now.strftime('%H:%M:%S.%f'), "DMX Data:", address, ":", data[address-1+0], "->", str(round(data[address-1+0]/255,2)).ljust(5,"0"))
+        # print(now.strftime('%H:%M:%S.%f'), "DMX Data:", address, ":", data[address-1+0], "->", str(round(data[address-1+0]/255,2)).ljust(5,"0"))
+        if receivingDMX:
+            dmxDelay = now - dmxThen
+        else:
+            print(now.strftime('%H:%M:%S'), "Started receiving DMX...")
+            receivingDMX = True
+            dmxDelay = timedelta(seconds=0)
+        dmxThen = now
 
     def TickTock():
+        nonlocal receivingDMX, redrawDelay, redrawThen
         now = datetime.now()
-        print(now.strftime('%H:%M:%S.%f'), "Tick Tock!")
+        # print(now.strftime('%H:%M:%S.%f'), "Tick Tock!")
+        if receivingDMX and (now - dmxThen) > timedelta(seconds=1):
+            print(now.strftime('%H:%M:%S'), "DMX Stream stopped...")
+            receivingDMX = False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 print("Stopping Cinderella Clock...")
                 olaWrapper.Stop()
 
+        redrawDelay = now - redrawThen
+
         screen.fill(WHITE)
 
         pygame.display.flip()
 
+        redrawThen = now
         olaWrapper.AddEvent(1000,TickTock)
 
     pygame.init()
@@ -115,6 +130,11 @@ def main():
     pygame.display.set_caption('Clock')
     hour_font = pygame.font.SysFont('Calibri', 25, True, False)
     digital_font = pygame.font.SysFont('Calibri', 32, False, False)
+
+    dmxThen = datetime.now()
+    dmxDelay = timedelta(seconds=0)
+    redrawThen = datetime.now()
+    receivingDMX = False
 
     client = olaWrapper.Client()
     client.RegisterUniverse(universe, client.REGISTER, NewData)
