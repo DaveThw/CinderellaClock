@@ -101,7 +101,7 @@ def main():
             print(now.strftime('%H:%M:%S'), "Started receiving DMX...")
             receivingDMX = True
             dmxDelay = timedelta(seconds=0)
-        dmxData = data[address-1:address-1+3]
+        dmxData = data[address-1:address-1+4]
         dmxThen = now
 
     def TickTock():
@@ -125,9 +125,18 @@ def main():
         blitRotate(screen, clock_face, center, face_centre, - clock_theta)
 
         # draw hands
-        hour_theta = get_angle_deg(now.hour + 1.0 * now.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
-        minute_theta = get_angle_deg(now.minute, MINUTES_IN_HOUR)
-        second_theta = get_angle_deg(now.second, SECONDS_IN_MINUTE)
+        if receivingDMX:
+            # dmx_hour   = round(((dmxData[0]<<8) + dmxData[1]) / 65535 * 12, 0)
+            dmx_hour   = round(dmxData[0] / 255 * 12, 0)
+            dmx_minute = round(dmxData[1] / 255 * 60, 0)
+            dmx_second = round(dmxData[2] / 255 * 60, 0)
+            hour_theta   = get_angle_deg(dmx_hour + 1.0 * dmx_minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
+            minute_theta = get_angle_deg(dmx_minute, MINUTES_IN_HOUR)
+            second_theta = get_angle_deg(dmx_second, SECONDS_IN_MINUTE)
+        else:
+            hour_theta   = get_angle_deg(now.hour + 1.0 * now.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
+            minute_theta = get_angle_deg(now.minute, MINUTES_IN_HOUR)
+            second_theta = get_angle_deg(now.second, SECONDS_IN_MINUTE)
 
         for (hand, theta) in (
             (hour_hand, hour_theta),
@@ -183,6 +192,7 @@ def main():
             digital_text = "DMX Data: " + str(address) + ": "
             digital_text += str(dmxData[0]) + "->" + str(round(dmxData[0]/255*100,1)) + "%, "
             digital_text += str(dmxData[1]) + "->" + str(round(dmxData[1]/255*100,1)) + "%, "
+            #digital_text += str(dmxData[0]) + "," + str(dmxData[1]) + "->" + str((dmxData[0]<<8) + dmxData[1]) + "=" + str(round(((dmxData[0]<<8) + dmxData[1])/65535*100,2)) + "%, "
             digital_text += str(dmxData[2]) + "->" + str(round(dmxData[2]/255*100,1)) + "%"
             text = digital_font.render(digital_text, True, BLACK)
             screen.blit(
