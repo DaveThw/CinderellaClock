@@ -24,7 +24,7 @@ WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 
 DIGITAL_H = 100 # height of digital clock
-W = 600 # screen width
+W = 500 # screen width
 H = W + DIGITAL_H # screen height
 CLOCK_W = W # analog clock width
 CLOCK_H = W # analog clock height
@@ -92,19 +92,20 @@ def main():
             address = int(a)
 
     def NewData(data):
-        nonlocal receivingDMX, dmxDelay, dmxThen
+        nonlocal receivingDMX, dmxDelay, dmxThen, dmxData
         now = datetime.now()
-        # print(now.strftime('%H:%M:%S.%f'), "DMX Data:", address, ":", data[address-1+0], "->", str(round(data[address-1+0]/255,2)).ljust(5,"0"))
+        # print(now.strftime('%H:%M:%S.%f'), "DMX Data:", address, ":", data[address-1+0], "->", str(round(data[address-1+0]/255,2)).ljust(5,"0"), ",", data[address-1+1], "->", str(round(data[address-1+1]/255,2)).ljust(5,"0"), ",", data[address-1+2], "->", str(round(data[address-1+2]/255,2)).ljust(5,"0"))
         if receivingDMX:
             dmxDelay = now - dmxThen
         else:
             print(now.strftime('%H:%M:%S'), "Started receiving DMX...")
             receivingDMX = True
             dmxDelay = timedelta(seconds=0)
+        dmxData = data[address-1:address-1+3]
         dmxThen = now
 
     def TickTock():
-        nonlocal receivingDMX, redrawDelay, redrawThen
+        nonlocal receivingDMX, redrawThen
         now = datetime.now()
         # print(now.strftime('%H:%M:%S.%f'), "Tick Tock!")
         if receivingDMX and (now - dmxThen) > timedelta(seconds=1):
@@ -120,10 +121,67 @@ def main():
 
         screen.fill(WHITE)
 
+        # draw digital clock
+        digital_text = now.strftime('%H:%M:%S')
+        text = digital_font.render(digital_text, True, BLACK)
+        screen.blit(
+            text,
+            [
+                W / 2 - digital_font.size(digital_text)[0] / 2,
+                H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2
+            ]
+        )
+
+        digital_text = "Frame length: " + str(redrawDelay)
+        text = digital_font.render(digital_text, True, BLACK)
+        screen.blit(
+            text,
+            [
+                W / 2 - digital_font.size(digital_text)[0] / 2,
+                H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2 - digital_font.size(digital_text)[1]
+            ]
+        )
+        digital_text = str(round(one_second/redrawDelay,2)).ljust(5,"0") + "fps"
+        text = digital_font.render(digital_text, True, BLACK)
+        screen.blit(
+            text,
+            [
+                W / 2 - digital_font.size(digital_text)[0] / 2,
+                H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2 + digital_font.size(digital_text)[1]
+            ]
+        )
+
+        if receivingDMX:
+            try:
+                digital_text = "DMX: " + str(round(one_second/dmxDelay,2)).ljust(5,"0") + "fps"
+            except ZeroDivisionError:
+                digital_text = "DMX: ??? fps"
+            text = digital_font.render(digital_text, True, BLACK)
+            screen.blit(
+                text,
+                [
+                    W / 2 - digital_font.size(digital_text)[0] / 2,
+                    H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2 - digital_font.size(digital_text)[1]*2
+                ]
+            )
+
+            digital_text = "DMX Data: " + str(address) + ": "
+            digital_text += str(dmxData[0]) + "->" + str(round(dmxData[0]/255,2)).ljust(5,"0") + ", "
+            digital_text += str(dmxData[1]) + "->" + str(round(dmxData[1]/255,2)).ljust(5,"0") + ", "
+            digital_text += str(dmxData[2]) + "->" + str(round(dmxData[2]/255,2)).ljust(5,"0")
+            text = digital_font.render(digital_text, True, BLACK)
+            screen.blit(
+                text,
+                [
+                    W / 2 - digital_font.size(digital_text)[0] / 2,
+                    H - DIGITAL_H / 2 - digital_font.size(digital_text)[1] / 2 - digital_font.size(digital_text)[1]*3
+                ]
+            )
+
         pygame.display.flip()
 
         redrawThen = now
-        olaWrapper.AddEvent(1000,TickTock)
+        olaWrapper.AddEvent(1000/20,TickTock)
 
     pygame.init()
     screen = pygame.display.set_mode(SIZE, pygame.RESIZABLE)
@@ -135,6 +193,9 @@ def main():
     dmxDelay = timedelta(seconds=0)
     redrawThen = datetime.now()
     receivingDMX = False
+    dmxData = []
+
+    one_second = timedelta(seconds=1)
 
     client = olaWrapper.Client()
     client.RegisterUniverse(universe, client.REGISTER, NewData)
