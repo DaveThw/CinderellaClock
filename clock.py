@@ -106,8 +106,14 @@ def main():
             print(now.strftime('%H:%M:%S'), "Started receiving DMX...")
             receivingDMX = True
             dmxDelay = timedelta(seconds=0)
-        dmxData = data[address-1:address-1+8]
+        dmxData = data[address-1:address-1+28]
         dmxThen = now
+
+    def dmxTime(offset):
+        return datetime(year=1, month=1, day=1, hour=int(round(dmxData[offset+0] / 255 * 23, 0)), minute=int(round(dmxData[offset+1] / 255 * 59, 0)), second=int(round(dmxData[offset+2] / 255 * 59, 0)))
+
+    def dmxProgress(offset):
+        return ((dmxData[offset+0]<<8) + dmxData[offset+1]) / 65535 * 50
 
     def calculateHands(now):
         nonlocal dmx_time1, dmx_time2
@@ -119,19 +125,48 @@ def main():
             #dmx_hour   = round(dmxData[0] / 255 * 23, 0)
             #dmx_minute = round(dmxData[1] / 255 * 59, 0)
             #dmx_second = round(dmxData[2] / 255 * 59, 0)
-            dmx_time1=datetime(year=1, month=1, day=1, hour=int(round(dmxData[0] / 255 * 23, 0)), minute=int(round(dmxData[1] / 255 * 59, 0)), second=int(round(dmxData[2] / 255 * 59, 0)))
-            dmx_time2=datetime(year=1, month=1, day=1, hour=int(round(dmxData[3] / 255 * 23, 0)), minute=int(round(dmxData[4] / 255 * 59, 0)), second=int(round(dmxData[5] / 255 * 59, 0)))
-            dmx_progress=((dmxData[6]<<8) + dmxData[7]) / 65535
-            dmx_time = dmx_time1 + (dmx_time2 - dmx_time1) * dmx_progress
-            hour_theta   = get_angle_deg(dmx_time.hour + 1.0 * dmx_time.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
-            minute_theta = get_angle_deg(dmx_time.minute, MINUTES_IN_HOUR)
-            second_theta = get_angle_deg(dmx_time.second, SECONDS_IN_MINUTE)
-            nextTick += one_second
+            dmx_control    = dmxData[0]
+            dmx_progress   = dmxProgress(1)
+            dmx_threshold1 = dmxProgress(3)
+            dmx_time1      = dmxTime(5)
+            dmx_threshold2 = dmxProgress(8)
+            dmx_time2      = dmxTime(10)
+            dmx_threshold3 = dmxProgress(13)
+            dmx_time3      = dmxTime(15)
+            dmx_threshold4 = dmxProgress(18)
+            dmx_time4      = dmxTime(20)
+            dmx_threshold5 = dmxProgress(23)
+            dmx_time5      = dmxTime(25)
+
+            if dmx_progress == 0:
+                time = now
+                nextTick = now
+            elif dmx_progress < dmx_threshold1:
+                time_now = datetime(year=1, month=1, day=1, hour=now.hour, minute=now.minute, second=now.second)
+                time = time_now + (dmx_time1 - time_now) * (dmx_progress / dmx_threshold1)
+                time = time.replace(second=now.second)
+                # nextTick += one_second
+                nextTick = now
+            elif dmx_progress == dmx_threshold1:
+                time = dmx_time1.replace(second=now.second)
+                # nextTick += one_second
+                nextTick = now
+            elif dmx_progress < dmx_threshold2:
+                time = dmx_time1 + (dmx_time2 - dmx_time1) * ((dmx_progress-dmx_threshold1) / (dmx_threshold2-dmx_threshold1))
+                time = time.replace(second=now.second)
+                # nextTick += one_second
+                nextTick = now
+            elif dmx_progress == dmx_threshold2:
+                time = dmx_time2.replace(second=now.second)
+                # nextTick += one_second
+                nextTick = now
+
         else:
-            hour_theta   = get_angle_deg(now.hour + 1.0 * now.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
-            minute_theta = get_angle_deg(now.minute, MINUTES_IN_HOUR)
-            second_theta = get_angle_deg(now.second, SECONDS_IN_MINUTE)
-            nextTick += one_second
+            time = now
+            nextTick = now
+        hour_theta   = get_angle_deg(time.hour + 1.0 * time.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
+        minute_theta = get_angle_deg(time.minute, MINUTES_IN_HOUR)
+        second_theta = get_angle_deg(time.second, SECONDS_IN_MINUTE)
 
     def TickTock():
         nonlocal receivingDMX, redrawThen
