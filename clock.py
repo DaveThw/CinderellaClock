@@ -121,6 +121,7 @@ def main():
             if event.type == pygame.QUIT:
                 print("pygame.QUIT: Stopping Cinderella Clock...")
                 olaWrapper.Stop()
+		return
 
         redrawDelay = now - redrawThen
 
