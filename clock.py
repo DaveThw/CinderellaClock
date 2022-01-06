@@ -91,8 +91,13 @@ def main():
         elif o in ("-a", "--address"):
             address = int(a)
 
+    zeroDMX = [0] * 512
+
     def NewData(data):
         nonlocal receivingDMX, dmxDelay, dmxThen, dmxData
+        if data == zeroDMX:
+           # completely zero DMX packet - probably a glitch..?
+           return
         now = datetime.now()
         # print(now.strftime('%H:%M:%S.%f'), "DMX Data:", address, ":", data[address-1+0], "->", str(round(data[address-1+0]/255,2)).ljust(5,"0"), ",", data[address-1+1], "->", str(round(data[address-1+1]/255,2)).ljust(5,"0"), ",", data[address-1+2], "->", str(round(data[address-1+2]/255,2)).ljust(5,"0"))
         if receivingDMX:
