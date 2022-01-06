@@ -109,8 +109,33 @@ def main():
         dmxData = data[address-1:address-1+8]
         dmxThen = now
 
+    def calculateHands(now):
+        nonlocal dmx_time1, dmx_time2
+        nonlocal hour_theta, minute_theta, second_theta
+        nonlocal nextTick
+
+        if receivingDMX:
+            # dmx_hour   = round(((dmxData[0]<<8) + dmxData[1]) / 65535 * 23, 0)
+            #dmx_hour   = round(dmxData[0] / 255 * 23, 0)
+            #dmx_minute = round(dmxData[1] / 255 * 59, 0)
+            #dmx_second = round(dmxData[2] / 255 * 59, 0)
+            dmx_time1=datetime(year=1, month=1, day=1, hour=int(round(dmxData[0] / 255 * 23, 0)), minute=int(round(dmxData[1] / 255 * 59, 0)), second=int(round(dmxData[2] / 255 * 59, 0)))
+            dmx_time2=datetime(year=1, month=1, day=1, hour=int(round(dmxData[3] / 255 * 23, 0)), minute=int(round(dmxData[4] / 255 * 59, 0)), second=int(round(dmxData[5] / 255 * 59, 0)))
+            dmx_progress=((dmxData[6]<<8) + dmxData[7]) / 65535
+            dmx_time = dmx_time1 + (dmx_time2 - dmx_time1) * dmx_progress
+            hour_theta   = get_angle_deg(dmx_time.hour + 1.0 * dmx_time.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
+            minute_theta = get_angle_deg(dmx_time.minute, MINUTES_IN_HOUR)
+            second_theta = get_angle_deg(dmx_time.second, SECONDS_IN_MINUTE)
+            nextTick += one_second
+        else:
+            hour_theta   = get_angle_deg(now.hour + 1.0 * now.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
+            minute_theta = get_angle_deg(now.minute, MINUTES_IN_HOUR)
+            second_theta = get_angle_deg(now.second, SECONDS_IN_MINUTE)
+            nextTick += one_second
+
     def TickTock():
-        nonlocal receivingDMX, redrawThen, dmx_time1, dmx_time2
+        nonlocal receivingDMX, redrawThen
+
         now = datetime.now()
         # print(now.strftime('%H:%M:%S.%f'), "Tick Tock!")
         if receivingDMX and (now - dmxThen) > dmxTimeout:
@@ -121,7 +146,7 @@ def main():
             if event.type == pygame.QUIT:
                 print("pygame.QUIT: Stopping Cinderella Clock...")
                 olaWrapper.Stop()
-		return
+                return
 
         redrawDelay = now - redrawThen
 
@@ -130,23 +155,10 @@ def main():
         # draw clock
         blitRotate(screen, clock_face, center, face_centre, - clock_theta)
 
+        if now > nextTick:
+            calculateHands(now)
+
         # draw hands
-        if receivingDMX:
-            # dmx_hour   = round(((dmxData[0]<<8) + dmxData[1]) / 65535 * 23, 0)
-            #dmx_hour   = round(dmxData[0] / 255 * 23, 0)
-            #dmx_minute = round(dmxData[1] / 255 * 59, 0)
-            #dmx_second = round(dmxData[2] / 255 * 59, 0)
-            dmx_time1=datetime(year=1, month=1, day=1, hour=int(dmxData[0] / 255 * 23), minute=int(dmxData[1] / 255 * 59), second=int(dmxData[2] / 255 * 59))
-            dmx_time2=datetime(year=1, month=1, day=1, hour=int(dmxData[3] / 255 * 23), minute=int(dmxData[4] / 255 * 59), second=int(dmxData[5] / 255 * 59))
-            dmx_progress=((dmxData[6]<<8) + dmxData[7]) / 65535
-            dmx_time = dmx_time1 + (dmx_time2 - dmx_time1) * dmx_progress
-            hour_theta   = get_angle_deg(dmx_time.hour + 1.0 * dmx_time.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
-            minute_theta = get_angle_deg(dmx_time.minute, MINUTES_IN_HOUR)
-            second_theta = get_angle_deg(dmx_time.second, SECONDS_IN_MINUTE)
-        else:
-            hour_theta   = get_angle_deg(now.hour + 1.0 * now.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
-            minute_theta = get_angle_deg(now.minute, MINUTES_IN_HOUR)
-            second_theta = get_angle_deg(now.second, SECONDS_IN_MINUTE)
 
         for (hand, theta) in (
             (hour_hand, hour_theta),
@@ -231,6 +243,10 @@ def main():
     dmxData = []
     dmx_time1 = datetime(year=1, month=1, day=1)
     dmx_time2 = datetime(year=1, month=1, day=1)
+    hour_theta = 0
+    minute_theta = 0
+    second_theta = 0
+    nextTick = datetime.now()
 
     # load images
     current_path = os.path.dirname(__file__)
