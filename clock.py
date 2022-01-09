@@ -116,9 +116,8 @@ def main():
         return ((dmxData[offset+0]<<8) + dmxData[offset+1]) / 50
 
     def calculateHands(now):
-        nonlocal dmx_time2_start
         nonlocal hour_theta, minute_theta, second_theta
-        nonlocal nextTick, time
+        nonlocal tickLength, lastTick, time, second, lastSecond
         nonlocal time2_start_second_offset
 
         if receivingDMX:
@@ -139,33 +138,38 @@ def main():
             dmx_threshold5 = dmxProgress(23) #  0:17:30 => 1050s
             dmx_time5      = dmxTime(25)     # 13:00
 
-            only_move_hands_on_second_tick = False
-
             if dmx_progress == 0:
                 # 0: real time
                 time = now
-                nextTick = now
+                second = time.second
+                tickLength = timedelta(seconds=0)
+
             elif dmx_progress < dmx_threshold1:
                 # 0 -> threshold 1: seconds continue in real time, hours and minutes 'fade' from real time to time 1
                 time_now = datetime(year=1, month=1, day=1, hour=now.hour, minute=now.minute, second=now.second)
                 time = time_now + (dmx_time1 - time_now) * (dmx_progress / dmx_threshold1)
-                time = time.replace(second=now.second)
-                nextTick = nextTick+one_second if only_move_hands_on_second_tick else now
+                second=(lastSecond+1) % 60
+                tickLength = timedelta(seconds=1)
+
             elif dmx_progress == dmx_threshold1:
                 # threshold 1: seconds continue in real time, hours and minutes from time 1 (9:20)
-                time = dmx_time1.replace(second=now.second)
-                nextTick = nextTick+one_second if only_move_hands_on_second_tick else now
+                time = dmx_time1
+                second=(lastSecond+1) % 60
+                tickLength = timedelta(seconds=1)
+
             elif dmx_progress < dmx_threshold2:
                 # threshold 1 -> 2: seconds continue in real time, hours and minutes 'fade' from time 1 to time 2
                 time = dmx_time1 + (dmx_time2 - dmx_time1) * ((dmx_progress-dmx_threshold1) / (dmx_threshold2-dmx_threshold1))
-                time = time.replace(second=now.second)
-                nextTick = nextTick+one_second if only_move_hands_on_second_tick else now
+                second=(lastSecond+1) % 60
+                tickLength = timedelta(seconds=1)
+
             elif dmx_progress == dmx_threshold2:
                 # threshold 2: seconds continue in real time, hours and minutes from time 2 (11:00)
-                time = dmx_time2.replace(second=now.second)
-                dmx_time2_start = time
-                time2_start_second_offset = int(((time.second + 29) % 60) - 29)
-                nextTick = nextTick+one_second if only_move_hands_on_second_tick else now
+                time = dmx_time2
+                second=(lastSecond+1) % 60
+                time2_start_second_offset = int(((second + 29) % 60) - 29)
+                tickLength = timedelta(seconds=1)
+
             elif dmx_progress < dmx_threshold3:
                 # threshold 2 -> 3: seconds 'fade' from real time to time 3, hours and minutes 'fade' from time 2 to time 3
                 time = dmx_time2 + (dmx_time3 - dmx_time2) * ((dmx_progress-dmx_threshold2) / (dmx_threshold3-dmx_threshold2))
@@ -176,42 +180,76 @@ def main():
                 now_second = now.second
 
                 this_second = time2_start_second_offset + ((round(phase_duration/60)*60 - time2_start_second_offset + dmx_time3.second) / phase_duration * phase_progress)
+                second = int(this_second % 60)
 
-                time = time.replace(second=int(this_second % 60))
-                
-                nextTick = nextTick+one_second if only_move_hands_on_second_tick else now
+                tickLength = timedelta(seconds=0)
+
             elif dmx_progress == dmx_threshold3:
                 # threshold 3: hours, minutes and seconds from time 3 (11:58:00)
                 time = dmx_time3
-                nextTick = nextTick+one_second if only_move_hands_on_second_tick else now
+                second = time.second
+                tickLength = timedelta(seconds=0)
+
             elif dmx_progress < dmx_threshold4:
                 # threshold 3 -> 4: hours, minutes and seconds 'fade' from time 3 to time 4
                 time = dmx_time3 + (dmx_time4 - dmx_time3) * ((dmx_progress-dmx_threshold3) / (dmx_threshold4-dmx_threshold3))
-                nextTick = nextTick+one_second if only_move_hands_on_second_tick else now
+                second = time.second
+                tickLength = timedelta(seconds=0)
+
             elif dmx_progress == dmx_threshold4:
                 # threshold 4: hours, minutes and seconds from time 4 (11:58:59)
                 time = dmx_time4
-                nextTick = nextTick+one_second if only_move_hands_on_second_tick else now
+                second = time.second
+                tickLength = timedelta(seconds=0)
+
             elif dmx_progress < dmx_threshold5:
                 # threshold 4 -> 5: seconds continue in real time, hours and minutes 'fade' from time 4 to time 5
                 time = dmx_time4 + (dmx_time5 - dmx_time4) * ((dmx_progress-dmx_threshold4) / (dmx_threshold5-dmx_threshold4))
-                time = time.replace(second=now.second)
-                nextTick = nextTick+one_second if only_move_hands_on_second_tick else now
+                second=(lastSecond+1) % 60
+                
+                tickLength = timedelta(seconds=1)
+
             elif dmx_progress == dmx_threshold5:
                 # threshold 5: seconds continue in real time, hours and minutes from time 5 (12:05)
-                time = dmx_time5.replace(second=now.second)
-                nextTick = nextTick+one_second if only_move_hands_on_second_tick else now
+                time = dmx_time5
+                second=(lastSecond+1) % 60
+                tickLength = timedelta(seconds=1)
+
             else:
                 # default: freeze!
-                nextTick = now
+                tickLength = timedelta(seconds=0)
 
         else:
             # not receiving any DMX
             time = now
-            nextTick = now
-        hour_theta   = get_angle_deg(time.hour + 1.0 * time.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
-        minute_theta = get_angle_deg(time.minute, MINUTES_IN_HOUR)
-        second_theta = get_angle_deg(time.second, SECONDS_IN_MINUTE)
+            second = time.second
+            tickLength = timedelta(seconds=1)
+
+        only_move_hands_on_second_tick = False
+        smooth_minute_hand = True
+
+        if now > lastTick + tickLength:
+            hour_theta   = get_angle_deg(time.hour + 1.0 * time.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
+            if smooth_minute_hand:
+                minute_theta = get_angle_deg(time.minute + 1.0 * time.second / SECONDS_IN_MINUTE, MINUTES_IN_HOUR)
+            else:
+                minute_theta = get_angle_deg(time.minute, MINUTES_IN_HOUR)
+            second_theta = get_angle_deg(second, SECONDS_IN_MINUTE)
+            if tickLength > timedelta(seconds=0):
+                lastTick += tickLength
+                lastSecond=second
+            elif lastSecond != second:
+                lastTick=now
+                lastSecond=second
+
+        elif smooth_minute_hand:
+            hour_theta   = get_angle_deg(time.hour + 1.0 * time.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
+            minute_theta = get_angle_deg(time.minute + 1.0 * time.second / SECONDS_IN_MINUTE, MINUTES_IN_HOUR)
+
+        elif not only_move_hands_on_second_tick:
+            hour_theta   = get_angle_deg(time.hour + 1.0 * time.minute / MINUTES_IN_HOUR, HOURS_IN_CLOCK)
+            minute_theta = get_angle_deg(time.minute, MINUTES_IN_HOUR)
+
 
     def TickTock():
         nonlocal receivingDMX, redrawThen
@@ -235,8 +273,7 @@ def main():
         # draw clock
         blitRotate(screen, clock_face, center, face_centre, - clock_theta)
 
-        if now > nextTick:
-            calculateHands(now)
+        calculateHands(now)
 
         # draw hands
 
@@ -321,13 +358,16 @@ def main():
     redrawThen = datetime.now()
     receivingDMX = False
     dmxData = []
-    dmx_time2_start = datetime(year=1, month=1, day=1)
     time2_start_second_offset = 0
     hour_theta = 0
     minute_theta = 0
     second_theta = 0
-    nextTick = datetime.now()
+    tickLength = timedelta(seconds=0)
+    lastTick = datetime.now()
+    
     time = datetime.now()
+    second = time.second
+    lastSecond = second
 
     # load images
     current_path = os.path.dirname(__file__)
