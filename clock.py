@@ -139,25 +139,39 @@ def main():
             dmx_time5      = dmxTime(25)
 
             if dmx_progress == 0:
+                # 0: real time
                 time = now
                 nextTick = now
             elif dmx_progress < dmx_threshold1:
+                # 0 -> threshold 1: seconds continue in real time, hours and minutes 'fade' from real time to time 1
                 time_now = datetime(year=1, month=1, day=1, hour=now.hour, minute=now.minute, second=now.second)
                 time = time_now + (dmx_time1 - time_now) * (dmx_progress / dmx_threshold1)
                 time = time.replace(second=now.second)
                 # nextTick += one_second
                 nextTick = now
             elif dmx_progress == dmx_threshold1:
+                # threshold 1: seconds continue in real time, hours and minutes from time 1 (9:20)
                 time = dmx_time1.replace(second=now.second)
                 # nextTick += one_second
                 nextTick = now
             elif dmx_progress < dmx_threshold2:
+                # threshold 1 -> 2: seconds continue in real time, hours and minutes 'fade' from time 1 to time 2
                 time = dmx_time1 + (dmx_time2 - dmx_time1) * ((dmx_progress-dmx_threshold1) / (dmx_threshold2-dmx_threshold1))
                 time = time.replace(second=now.second)
                 # nextTick += one_second
                 nextTick = now
             elif dmx_progress == dmx_threshold2:
+                # threshold 2: seconds continue in real time, hours and minutes from time 2 (11:00)
                 time = dmx_time2.replace(second=now.second)
+                # nextTick += one_second
+                nextTick = now
+            elif dmx_progress < dmx_threshold3:
+                # threshold 2 -> 3: seconds 'fade' from real time to time 3, hours and minutes 'fade' from time 2 to time 3
+                # nextTick += one_second
+                nextTick = now
+            elif dmx_progress == dmx_threshold1:
+                # threshold 1: seconds continue in real time, hours and minutes from time 1 (9:20)
+                time = dmx_time1.replace(second=now.second)
                 # nextTick += one_second
                 nextTick = now
 
